@@ -3,6 +3,7 @@ import { Form, Button, Col, Row, Container } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "../css/NuevaHora.css";
 import axios from "axios";
+import { getSubordinadosUsuarioActual } from "./Services/userService";
 
 const NuevaHora = () => {
   const navigate = useNavigate();
@@ -22,14 +23,8 @@ const NuevaHora = () => {
   }, []);
 
   const fetchUsuarios = async () => {
-    try {
-      const res = await axios.get("http://localhost:3002/api/usuario");
-      const data = res.data?.data || [];
-      setUsuarios(data);
-    } catch (err) {
-      console.error("Error al obtener usuarios:", err);
-      setUsuarios([]);
-    }
+    const data = await getSubordinadosUsuarioActual();
+    setUsuarios(data);
   };
 
   const fetchObras = async () => {

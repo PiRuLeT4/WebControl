@@ -16,6 +16,7 @@ import {
 import axios from "axios";
 import "../css/Horas.css";
 import { useNavigate } from "react-router-dom";
+import { getSubordinadosUsuarioActual } from "./Services/userService";
 
 const HorasList = () => {
   //#region ESTADOS
@@ -41,6 +42,7 @@ const HorasList = () => {
   const [filterValidadas, setFilterValidadas] = useState(true);
   const [open, setOpen] = useState(true);
   const [user, setUser] = useState(null);
+  const [subordinados, setSubordinados] = useState([]);
 
   const itemsPerPage = 10;
   const maxPaginasVisibles = 10;
@@ -50,21 +52,8 @@ const HorasList = () => {
 
   // Usuarios únicos
   const usuariosUnicos = useMemo(() => {
-    const map = new Map();
-    horas.forEach((h) => {
-      const key = String(h.codigo_usuario ?? "");
-      if (!map.has(key)) {
-        const nombre = [h.nombre, h.apellido1, h.apellido2]
-          .filter(Boolean)
-          .join(" ");
-        map.set(key, {
-          codigo_usuario: key,
-          nombre: nombre || `Usuario ${key}`,
-        });
-      }
-    });
-    return Array.from(map.values());
-  }, [horas]);
+    return subordinados; // ← ya está filtrado por manager
+  }, [subordinados]);
 
   // Obras únicas
   const obrasUnicas = useMemo(() => {
@@ -135,6 +124,11 @@ const HorasList = () => {
     }
   };
 
+  const fetchSubordinados = async () => {
+    const data = await getSubordinadosUsuarioActual();
+    setSubordinados(data);
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -148,6 +142,7 @@ const HorasList = () => {
     fetchAllHoras();
     fetchEstadoObra();
     fetchTipoObra();
+    fetchSubordinados();
   }, []);
   // ------------------- UTILIDADES ------------------- //
   //#region UTILIDADES
