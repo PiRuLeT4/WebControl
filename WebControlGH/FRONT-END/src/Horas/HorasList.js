@@ -12,6 +12,7 @@ import {
   Card,
   Collapse,
   Dropdown,
+  Accordion,
 } from "react-bootstrap";
 import axios from "axios";
 import "../css/Horas.css";
@@ -76,8 +77,17 @@ const HorasList = () => {
   const fetchAllHoras = async () => {
     setLoading(true);
     try {
-      const endpoint = "http://localhost:3002/api/horas/all";
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) {
+        console.warn("No hay usuario en localStorage");
+        return;
+      }
+      const userData = JSON.parse(storedUser);
+      const codigoResponsable = userData.codigo_usuario;
+
+      const endpoint = `http://localhost:3002/api/horas/horasSubordinados/${codigoResponsable}`;
       const res = await axios.get(endpoint);
+
       const data = res.data?.data || [];
       setHoras(data);
 
@@ -390,247 +400,251 @@ const HorasList = () => {
       <Container>
         <Row className="align-items-center mb-3">
           <Col md={8}>
-            <Card className="mt-3">
-              <Card.Header>
-                <Button
-                  variant="link"
-                  onClick={() => setOpen(!open)}
-                  aria-controls="filtros-collapse"
-                  aria-expanded={open}
-                  style={{ textDecoration: "none" }}
-                >
-                  Criterios de búsqueda {open ? "▲" : "▼"}
-                </Button>
-              </Card.Header>
+            <Accordion
+              defaultActiveKey={open ? "0" : null}
+              onSelect={() => setOpen((o) => !o)}
+            >
+              <Accordion.Item eventKey="0">
+                <Accordion.Header>Criterios de búsqueda</Accordion.Header>
+                <Accordion.Body className="py-2">
+                  <Form>
+                    {/* Fechas, Usuario, Obra y Tarea en una sola fila */}
+                    <Row className="g-2 align-items-end mb-2">
+                      <Col md={2}>
+                        <Form.Group controlId="filtroStart">
+                          <Form.Label className="small mb-1">Fecha inicio</Form.Label>
+                          <Form.Control
+                            type="date"
+                            size="sm"
+                            value={filterStart}
+                            onChange={(e) => setFilterStart(e.target.value)}
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={2}>
+                        <Form.Group controlId="filtroEnd">
+                          <Form.Label className="small mb-1">Fecha fin</Form.Label>
+                          <Form.Control
+                            type="date"
+                            size="sm"
+                            value={filterEnd}
+                            onChange={(e) => setFilterEnd(e.target.value)}
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={3}>
+                        <Form.Group controlId="filtroUsuario">
+                          <Form.Label className="small mb-1">Usuario</Form.Label>
+                          <Form.Select
+                            size="sm"
+                            value={filterUsuario}
+                            onChange={(e) => setFilterUsuario(e.target.value)}
+                          >
+                            <option value="">[Subordinados]</option>
+                            {usuariosUnicos.map((u) => (
+                              <option
+                                key={u.codigo_usuario}
+                                value={u.codigo_usuario}
+                              >
+                                {u.nombre} {u.apellido1} ({u.codigo_usuario})
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                      <Col md={3}>
+                        <Form.Group controlId="filtroObra">
+                          <Form.Label className="small mb-1">Obra</Form.Label>
+                          <Form.Control
+                            size="sm"
+                            list="lista-obras-filtro"
+                            value={filterObraText}
+                            onChange={(e) => setFilterObraText(e.target.value)}
+                            placeholder="Buscar obra..."
+                          />
+                          <datalist id="lista-obras-filtro">
+                            {obrasUnicas.map((o) => (
+                              <option
+                                key={o.codigo_obra}
+                                value={`${o.codigo_obra} - ${o.descripcion}`}
+                              />
+                            ))}
+                          </datalist>
+                        </Form.Group>
+                      </Col>
+                      <Col md={2}>
+                        <Form.Group controlId="filtroTarea">
+                          <Form.Label className="small mb-1">Tarea</Form.Label>
+                          <Form.Control size="sm" placeholder="Busca tarea..." />
+                        </Form.Group>
+                      </Col>
+                    </Row>
 
-              <Collapse in={open}>
-                <div id="filtros-collapse">
-                  <Card.Body>
-                    <Form>
-                      {/* Fechas y Usuario */}
-                      <Row className="g-2 align-items-end">
-                        <Col md={4}>
-                          <Form.Group controlId="filtroStart">
-                            <Form.Label>Fecha inicio</Form.Label>
-                            <Form.Control
-                              type="date"
-                              value={filterStart}
-                              onChange={(e) => setFilterStart(e.target.value)}
-                            />
-                          </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                          <Form.Group controlId="filtroEnd">
-                            <Form.Label>Fecha fin</Form.Label>
-                            <Form.Control
-                              type="date"
-                              value={filterEnd}
-                              onChange={(e) => setFilterEnd(e.target.value)}
-                            />
-                          </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                          <Form.Group controlId="filtroUsuario">
-                            <Form.Label>Usuario</Form.Label>
-                            <Form.Select
-                              value={filterUsuario}
-                              onChange={(e) => setFilterUsuario(e.target.value)}
+                    {/* Estado obra, Tipo obra y Estados Horas en una sola fila */}
+                    <Row className="g-2 align-items-end">
+                      <Col md={3}>
+                        <Form.Group>
+                          <Form.Label className="small mb-1">Estado obra</Form.Label>
+                          <Dropdown>
+                            <Dropdown.Toggle
+                              variant="outline-secondary"
+                              size="sm"
+                              id="dropdown-estado-obra"
+                              className="w-100"
                             >
-                              <option value="">[Todos los subordinados]</option>
-                              {usuariosUnicos.map((u) => (
-                                <option
-                                  key={u.codigo_usuario}
-                                  value={u.codigo_usuario}
-                                >
-                                  {u.nombre} ({u.codigo_usuario})
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </Col>
-                      </Row>
+                              Estados
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu
+                              style={{ padding: 8, minWidth: 200 }}
+                            >
+                              {estadosObra.length > 0 ? (
+                                estadosObra.map((estado, index) => (
+                                  <Form.Check
+                                    key={index}
+                                    type="checkbox"
+                                    id={`estado-${index}`}
+                                    label={<small>{estado.descripcion_estado}</small>}
+                                    className="mb-1"
+                                    checked={estadosSeleccionados.includes(
+                                      estado.descripcion_estado
+                                    )}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setEstadosSeleccionados((prev) => [
+                                          ...prev,
+                                          estado.descripcion_estado,
+                                        ]);
+                                      } else {
+                                        setEstadosSeleccionados((prev) =>
+                                          prev.filter(
+                                            (item) =>
+                                              item !== estado.descripcion_estado
+                                          )
+                                        );
+                                      }
+                                    }}
+                                  />
+                                ))
+                              ) : (
+                                <div className="text-muted px-2">
+                                  <small>No hay estados disponibles</small>
+                                </div>
+                              )}
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </Form.Group>
+                      </Col>
 
-                      {/* Obra y Tarea */}
-                      <Row className="mt-3">
-                        <Col md={4}>
-                          <Form.Group controlId="filtroObra">
-                            <Form.Label>Obra</Form.Label>
-                            <Form.Control
-                              list="lista-obras-filtro"
-                              value={filterObraText}
-                              onChange={(e) =>
-                                setFilterObraText(e.target.value)
-                              }
-                              placeholder="Buscar obra..."
-                            />
-                            <datalist id="lista-obras-filtro">
-                              {obrasUnicas.map((o) => (
-                                <option
-                                  key={o.codigo_obra}
-                                  value={`${o.codigo_obra} - ${o.descripcion}`}
-                                />
-                              ))}
-                            </datalist>
-                          </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                          <Form.Group controlId="filtroTarea">
-                            <Form.Label>Tarea</Form.Label>
-                            <Form.Control placeholder="Busca tarea..." />
-                          </Form.Group>
-                        </Col>
-                      </Row>
+                      <Col md={3}>
+                        <Form.Group>
+                          <Form.Label className="small mb-1">Tipo de obra</Form.Label>
+                          <Dropdown>
+                            <Dropdown.Toggle
+                              variant="outline-secondary"
+                              size="sm"
+                              id="dropdown-tipo-obra"
+                              className="w-100"
+                            >
+                              Tipos
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu
+                              style={{ padding: 8, minWidth: 200 }}
+                            >
+                              {tiposObra.length > 0 ? (
+                                tiposObra.map((tipo, index) => (
+                                  <Form.Check
+                                    key={index}
+                                    type="checkbox"
+                                    id={`tipo-${index}`}
+                                    label={<small>{tipo.descripcion}</small>}
+                                    className="mb-1"
+                                    checked={tiposSeleccionados.includes(
+                                      tipo.descripcion
+                                    )}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setTiposSeleccionados((prev) => [
+                                          ...prev,
+                                          tipo.descripcion,
+                                        ]);
+                                      } else {
+                                        setTiposSeleccionados((prev) =>
+                                          prev.filter(
+                                            (item) => item !== tipo.descripcion
+                                          )
+                                        );
+                                      }
+                                    }}
+                                  />
+                                ))
+                              ) : (
+                                <div className="text-muted px-2">
+                                  <small>No hay tipos disponibles</small>
+                                </div>
+                              )}
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </Form.Group>
+                      </Col>
 
-                      {/* Estado y Tipo de Obra */}
-                      <Row className="mt-3">
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label>Estado obra</Form.Label>
-                            <Dropdown>
-                              <Dropdown.Toggle
-                                variant="outline-secondary"
-                                id="dropdown-estado-obra"
-                                className="w-100"
-                              >
-                                Seleccionar estados
-                              </Dropdown.Toggle>
-                              <Dropdown.Menu
-                                style={{ padding: 12, minWidth: 240 }}
-                              >
-                                {estadosObra.length > 0 ? (
-                                  estadosObra.map((estado, index) => (
-                                    <Form.Check
-                                      key={index}
-                                      type="checkbox"
-                                      id={`estado-${index}`}
-                                      label={estado.descripcion_estado}
-                                      className="mb-2"
-                                      checked={estadosSeleccionados.includes(
-                                        estado.descripcion_estado
-                                      )}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setEstadosSeleccionados((prev) => [
-                                            ...prev,
-                                            estado.descripcion_estado,
-                                          ]);
-                                        } else {
-                                          setEstadosSeleccionados((prev) =>
-                                            prev.filter(
-                                              (item) =>
-                                                item !==
-                                                estado.descripcion_estado
-                                            )
-                                          );
-                                        }
-                                      }}
-                                    />
-                                  ))
-                                ) : (
-                                  <div className="text-muted px-2">
-                                    No hay estados disponibles
-                                  </div>
-                                )}
-                              </Dropdown.Menu>
-                            </Dropdown>
-                          </Form.Group>
-                        </Col>
+                      <Col md={4}>
+                        <Form.Label className="small mb-1">Estados Horas:</Form.Label>
+                        <div className="d-flex gap-2 flex-wrap">
+                          <Form.Check
+                            type="checkbox"
+                            id="filtro-planificadas"
+                            label={<small>Planificadas</small>}
+                            checked={filterPlanificadas}
+                            onChange={(e) =>
+                              setFilterPlanificadas(e.target.checked)
+                            }
+                          />
+                          <Form.Check
+                            type="checkbox"
+                            id="filtro-pendientes"
+                            label={<small>Pendientes</small>}
+                            checked={filterPendientes}
+                            onChange={(e) =>
+                              setFilterPendientes(e.target.checked)
+                            }
+                          />
+                          <Form.Check
+                            type="checkbox"
+                            id="filtro-validadas"
+                            label={<small>Validadas</small>}
+                            checked={filterValidadas}
+                            onChange={(e) =>
+                              setFilterValidadas(e.target.checked)
+                            }
+                          />
+                        </div>
+                      </Col>
 
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label>Tipo de obra</Form.Label>
-                            <Dropdown>
-                              <Dropdown.Toggle
-                                variant="outline-secondary"
-                                id="dropdown-tipo-obra"
-                                className="w-100"
-                              >
-                                Seleccionar tipos
-                              </Dropdown.Toggle>
-                              <Dropdown.Menu
-                                style={{ padding: 12, minWidth: 240 }}
-                              >
-                                {tiposObra.length > 0 ? (
-                                  tiposObra.map((tipo, index) => (
-                                    <Form.Check
-                                      key={index}
-                                      type="checkbox"
-                                      id={`tipo-${index}`}
-                                      label={tipo.descripcion}
-                                      className="mb-2"
-                                      checked={tiposSeleccionados.includes(
-                                        tipo.descripcion
-                                      )}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setTiposSeleccionados((prev) => [
-                                            ...prev,
-                                            tipo.descripcion,
-                                          ]);
-                                        } else {
-                                          setTiposSeleccionados((prev) =>
-                                            prev.filter(
-                                              (item) =>
-                                                item !== tipo.descripcion
-                                            )
-                                          );
-                                        }
-                                      }}
-                                    />
-                                  ))
-                                ) : (
-                                  <div className="text-muted px-2">
-                                    No hay tipos disponibles
-                                  </div>
-                                )}
-                              </Dropdown.Menu>
-                            </Dropdown>
-                          </Form.Group>
-                        </Col>
-                      </Row>
-
-                      {/* Estados Horas */}
-                      <Row className="mt-3">
-                        <Col>
-                          <Form.Label>Estados Horas</Form.Label>
-                          <div className="d-flex gap-3 flex-wrap">
-                            <Form.Check
-                              type="checkbox"
-                              id="filtro-planificadas"
-                              label="Planificadas"
-                              checked={filterPlanificadas}
-                              onChange={(e) =>
-                                setFilterPlanificadas(e.target.checked)
-                              }
-                            />
-                            <Form.Check
-                              type="checkbox"
-                              id="filtro-pendientes"
-                              label="Pendientes de validar"
-                              checked={filterPendientes}
-                              onChange={(e) =>
-                                setFilterPendientes(e.target.checked)
-                              }
-                            />
-                            <Form.Check
-                              type="checkbox"
-                              id="filtro-validadas"
-                              label="Validadas"
-                              checked={filterValidadas}
-                              onChange={(e) =>
-                                setFilterValidadas(e.target.checked)
-                              }
-                            />
-                          </div>
-                        </Col>
-                      </Row>
+                      <Col md={2} className="text-end">
+                        <div className="d-flex gap-1 justify-content-end">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={handleBuscar}
+                          >
+                            Buscar
+                          </Button>
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={limpiarFiltros}
+                          >
+                            Limpiar
+                          </Button>
+                        </div>
+                      </Col>
+                    </Row>
                     </Form>
-                  </Card.Body>
-                </div>
-              </Collapse>
-            </Card>
+                </Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
 
-            {/* Búsqueda y botones */}
+            {/* Búsqueda por texto */}
             <Row className="align-items-center mt-3">
               <Col>
                 <div className="d-flex align-items-center gap-2">
@@ -642,22 +656,8 @@ const HorasList = () => {
                       setSearchTerm(e.target.value);
                       setCurrentPage(1);
                     }}
-                    style={{ minWidth: 250 }}
+                    style={{ minWidth: 250, maxWidth: 300 }}
                   />
-                  <Button
-                    variant="primary"
-                    onClick={handleBuscar}
-                    style={{ minWidth: "100px" }}
-                  >
-                    Buscar
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={limpiarFiltros}
-                    style={{ minWidth: "150px" }}
-                  >
-                    🔄 Limpiar Filtros
-                  </Button>
                   {mostrarSoloPendientes && (
                     <span className="badge bg-warning text-dark">
                       📌 Mostrando solo pendientes
@@ -685,129 +685,190 @@ const HorasList = () => {
 
       {/* TABLA */}
       <div className="table-container">
-        {mostrarListado && (
-          <>
-            <Table striped bordered hover className="mt-3">
-              <thead>
-                <tr>
-                  <th style={{ width: 40, textAlign: "center" }}>
-                    <Form.Check
-                      type="checkbox"
-                      checked={isAllSelectedOnPage}
-                      onChange={handleToggleSelectAll}
-                      aria-label="Seleccionar todos en página"
-                    />
-                  </th>
-                  <th>Dia Trab.</th>
-                  <th>Usuario</th>
-                  <th>C.Obra</th>
-                  <th>Descripcion</th>
-                  <th>Hrs</th>
-                  <th>Tarea</th>
-                  <th>UsuV</th>
-                  <th>Validado</th>
-                  <th>Observaciones</th>
-                  <th>Accion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {horasActuales.length > 0 ? (
-                  horasActuales.map((h, idx) => {
-                    const rowKey = getRowKey(h);
-                    return (
-                      <tr key={idx}>
-                        <td style={{ textAlign: "center" }}>
-                          <Form.Check
-                            type="checkbox"
-                            checked={selectedIds.includes(rowKey)}
-                            onChange={() => handleToggleRow(rowKey)}
-                          />
-                        </td>
-                        <td>{formatearFecha(h.dia_trabajado)}</td>
-                        <td>
-                          {[h.nombre, h.apellido1, h.apellido2]
+        {/* La tabla ahora muestra siempre la cabecera */}
+        <Table striped bordered hover className="mt-3">
+          <thead>
+            <tr>
+              <th style={{ width: 40, textAlign: "center" }}>
+                <Form.Check
+                  type="checkbox"
+                  checked={isAllSelectedOnPage}
+                  onChange={handleToggleSelectAll}
+                  aria-label="Seleccionar todos en página"
+                />
+              </th>
+              <th>Dia Trab.</th>
+              <th>Usuario</th>
+              <th>C.Obra</th>
+              <th>Descripcion</th>
+              <th>Hrs</th>
+              <th>Tarea</th>
+              <th>UsuV</th>
+              <th>Validado</th>
+              <th>Observaciones</th>
+              <th>Accion</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {/* Si mostrarListado === false mostramos el body vacío (sin filas) */}
+            {mostrarListado ? (
+              horasActuales.length > 0 ? (
+                horasActuales.map((h, idx) => {
+                  const rowKey = getRowKey(h);
+                  return (
+                    <tr key={idx}>
+                      <td style={{ textAlign: "center" }}>
+                        <Form.Check
+                          type="checkbox"
+                          checked={selectedIds.includes(rowKey)}
+                          onChange={() => handleToggleRow(rowKey)}
+                        />
+                      </td>
+                      <td>{formatearFecha(h.dia_trabajado)}</td>
+                      <td
+                        style={{
+                          maxWidth: "150px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                        title={
+                          [h.nombre, h.apellido1, h.apellido2]
                             .filter(Boolean)
-                            .join(" ") || `Usuario ${h.codigo_usuario}`}
-                        </td>
-                        <td>{h.codigo_obra ?? "-"}</td>
-                        <td>{h.descripcion_obra ?? "-"}</td>
-                        <td>{h.num_horas ?? "-"}</td>
-                        <td>{h.tarea ?? "-"}</td>
-                        <td>
-                          {[
+                            .join(" ") || `Usuario ${h.codigo_usuario}`
+                        }
+                      >
+                        {[h.nombre, h.apellido1, h.apellido2]
+                          .filter(Boolean)
+                          .join(" ") || `Usuario ${h.codigo_usuario}`}
+                      </td>
+                      <td>{h.codigo_obra ?? "-"}</td>
+                      <td
+                        style={{
+                          maxWidth: "200px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                        title={h.descripcion_obra ?? "-"}
+                      >
+                        {h.descripcion_obra ?? "-"}
+                      </td>
+                      <td>{h.num_horas ?? h.total_horas_pendientes ?? "-"}</td>
+                      <td
+                        style={{
+                          maxWidth: "150px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                        title={h.tarea ?? "-"}
+                      >
+                        {h.tarea ?? "-"}
+                      </td>
+                      <td
+                        style={{
+                          maxWidth: "120px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                        title={
+                          [
                             h.nombre_validador,
                             h.apellido1_validador,
                             h.apellido2_validador,
                           ]
                             .filter(Boolean)
-                            .join(" ") || "--"}
-                        </td>
-                        <td>
-                          {h.fecha_validacion
-                            ? formatearFecha(h.fecha_validacion)
-                            : "[NO]"}
-                        </td>
-                        <td>{String(h.observaciones || "").trim() || "--"}</td>
-                        <td>
-                          <Button
-                            variant="info"
-                            size="sm"
-                            onClick={() =>
-                              navigate(
-                                `/home/registro-horas/detalle/${h.codigo_usuario}`,
-                                {
-                                  state: { detalleHora: h },
-                                }
-                              )
-                            }
-                          >
-                            Detalle
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="11" className="text-center">
-                      No hay registros que mostrar.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </Table>
+                            .join(" ") || "--"
+                        }
+                      >
+                        {[
+                          h.nombre_validador,
+                          h.apellido1_validador,
+                          h.apellido2_validador,
+                        ]
+                          .filter(Boolean)
+                          .join(" ") || "--"}
+                      </td>
+                      <td>
+                        {h.fecha_validacion
+                          ? formatearFecha(h.fecha_validacion)
+                          : "[NO]"}
+                      </td>
+                      <td
+                        style={{
+                          maxWidth: "150px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                        title={String(h.observaciones || "").trim() || "--"}
+                      >
+                        {String(h.observaciones || "").trim() || "--"}
+                      </td>
+                      <td className="btn-detalle">
+                        <Button
+                          variant="info"
+                          size="sm"
+                          onClick={() =>
+                            navigate(
+                              `/home/registro-horas/detalle/${h.codigo_usuario}`,
+                              {
+                                state: { detalleHora: h },
+                              }
+                            )
+                          }
+                        >
+                          Detalle
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="11" className="text-center">
+                    No hay registros que mostrar.
+                  </td>
+                </tr>
+              )
+            ) : null}
+          </tbody>
+        </Table>
 
-            {/* Paginación */}
-            <Pagination>
-              <Pagination.First
-                onClick={() => handlePageChange(1)}
-                disabled={currentPage === 1}
+        {/* Paginación */}
+        {mostrarListado && horasFiltradas.length > 0 && (
+          <Pagination>
+            <Pagination.First
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+            />
+            {startPage > 1 && (
+              <Pagination.Prev
+                onClick={() => handlePageChange(startPage - 1)}
               />
-              {startPage > 1 && (
-                <Pagination.Prev
-                  onClick={() => handlePageChange(startPage - 1)}
-                />
-              )}
-              {paginasVisibles.map((page) => (
-                <Pagination.Item
-                  key={page}
-                  active={page === currentPage}
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </Pagination.Item>
-              ))}
-              {endPage < totalPaginas && (
-                <Pagination.Next
-                  onClick={() => handlePageChange(endPage + 1)}
-                />
-              )}
-              <Pagination.Last
-                onClick={() => handlePageChange(totalPaginas)}
-                disabled={currentPage === totalPaginas}
+            )}
+            {paginasVisibles.map((page) => (
+              <Pagination.Item
+                key={page}
+                active={page === currentPage}
+                onClick={() => handlePageChange(page)}
+              >
+                {page}
+              </Pagination.Item>
+            ))}
+            {endPage < totalPaginas && (
+              <Pagination.Next
+                onClick={() => handlePageChange(endPage + 1)}
               />
-            </Pagination>
-          </>
+            )}
+            <Pagination.Last
+              onClick={() => handlePageChange(totalPaginas)}
+              disabled={currentPage === totalPaginas}
+            />
+          </Pagination>
         )}
       </div>
     </div>
