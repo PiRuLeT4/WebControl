@@ -42,6 +42,10 @@ import HorasList from "../Horas/HorasList";
 import DetalleHora from "../Horas/DetalleHora";
 import NuevaHora from "../Horas/NuevaHora";
 
+// -- GASTOS -- \\
+import GastosList from "../Gastos/GastosList.js";
+
+
 // Componente principal de la aplicación
 function App() {
   return (
@@ -109,6 +113,10 @@ function MainLayout() {
             path="registro-horas/detalle/:idUsuario"
             element={<DetalleHora />}
           />
+          
+          {/*Gastos  */}
+          <Route path="gastos-obras" element={<GastosList />} />
+
         </Routes>
       </div>
     </div>
