@@ -24,6 +24,23 @@ export class HoraController {
     }
   }
 
+  // funcion para obtener horas de subordinados de un manager
+  static async getHorasBySubordinados(req, res, next) {
+    try {
+      const { managerCodigo } = req.params;
+      if (!managerCodigo) {
+        return res.status(400).json({
+          success: false,
+          message: "Se requiere el código del manager",
+        });
+      }
+      const horas = await HoraModel.getHorasBySubordinados(managerCodigo);
+      res.json({ success: true, data: horas });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // funcion para agregar una nueva hora
   static async create(req, res, next) {
     try {
