@@ -114,7 +114,7 @@ function ProfitabilityTable() {
       <div className="search-bar">
         <input
           type="text"
-          placeholder="busque por nombre, descripción o código"
+          placeholder="Busque por nombre, descripción o código"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

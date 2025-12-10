@@ -11,6 +11,7 @@ import {
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import "../css/FacturaDetalle.css";
 
 let allPedidos = null;
 
@@ -184,8 +185,8 @@ function GestionPedidos() {
           aria-controls="filtros-collapse"
           aria-expanded={open}
           style={{
-            backgroundColor: "#d4edda",
-            color: "#155724",
+            backgroundColor: "#cce5ff",
+            color: "#004085",
             border: "none",
             marginBottom: "1rem",
           }}
@@ -198,7 +199,7 @@ function GestionPedidos() {
         <div
           id="filtros-collapse"
           className="mb-4 p-3 border rounded"
-          style={{ backgroundColor: "#e8f5e9" }}
+          style={{ backgroundColor: "#e9f5ff" }}
         >
           <Form>
             <div className="row">
@@ -273,9 +274,13 @@ function GestionPedidos() {
           type="text"
           placeholder="Buscar pedidos..."
           className="me-2"
-          style={{ maxWidth: "400px" }}
+          style={{ maxWidth: "150px" }}
         />
-        <Button variant="success" onClick={handleSearch}>
+        <Button 
+          variant="primary" 
+          onClick={handleSearch}
+          style={{ width: "auto" }}
+        >
           Buscar
         </Button>
       </div>

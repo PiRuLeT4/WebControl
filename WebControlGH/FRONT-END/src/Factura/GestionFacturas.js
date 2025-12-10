@@ -233,6 +233,18 @@ function GestionFacturas() {
   );
   const totalPaginas = Math.ceil(filteredFacturas.length / facturasPorPagina);
 
+  // Calcular el rango de páginas a mostrar
+  const maxPaginasVisibles = 10;
+  const startPage =
+    Math.floor((currentPage - 1) / maxPaginasVisibles) * maxPaginasVisibles + 1;
+  const endPage = Math.min(startPage + maxPaginasVisibles - 1, totalPaginas);
+
+  // Generar array de páginas visibles
+  const paginasVisibles = [];
+  for (let i = startPage; i <= endPage; i++) {
+    paginasVisibles.push(i);
+  }
+
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -404,7 +416,7 @@ function GestionFacturas() {
           type="text"
           placeholder="Busque por nombre y descripción"
           className="me-2"
-          style={{ maxWidth: "300px" }}
+          style={{ maxWidth: "265px" }}
         />
         <Button
           variant="primary"
@@ -418,18 +430,18 @@ function GestionFacturas() {
       <Container>
         <Row className="mb-2" md={3}>
           {/* <Col md={4} className="text-end"> */}
-            <Button onClick={handleNuevaFactura} className="custom-button">
-              Nueva Factura
-            </Button>
-            <Button onClick={handleBajaFactura} className="custom-button">
-              Baja Factura
-            </Button>
-            <Button onClick={handleCopiarFacturas} className="custom-button">
-              Importar Facturas desde DQEMS
-            </Button>
-            <Button onClick={handleImprimirFacturas} className="custom-button">
-              Imprimir Facturas
-            </Button>
+          <Button onClick={handleNuevaFactura} className="custom-button">
+            Nueva Factura
+          </Button>
+          <Button onClick={handleBajaFactura} className="custom-button">
+            Baja Factura
+          </Button>
+          <Button onClick={handleCopiarFacturas} className="custom-button">
+            Importar Facturas desde DQEMS
+          </Button>
+          <Button onClick={handleImprimirFacturas} className="custom-button">
+            Imprimir Facturas
+          </Button>
           {/* </Col> */}
         </Row>
       </Container>
@@ -444,7 +456,7 @@ function GestionFacturas() {
                 onChange={handleSelectAll}
               />
             </th>
-            <th>Obra</th>
+            <th style={{ width: "60px" }}>Obra</th>
             <th>Factu Compras</th>
             <th>Importe</th>
             <th>Fecha Alta</th>
@@ -452,7 +464,7 @@ function GestionFacturas() {
             <th>Fecha Baja</th>
             <th>User Alta</th>
             <th>User Baja</th>
-            <th>Observaciones</th>
+            <th style={{ width: "60px" }}>Observaciones</th>
             <th>Versión</th>
             <th>Detalles</th>
           </tr>
@@ -468,7 +480,13 @@ function GestionFacturas() {
                     onChange={() => handleCheckboxChange(factura.id)}
                   />
                 </td>
-                <td>{factura.codigo_obra ?? "-"}</td>
+                <td 
+                  className="text-truncate" 
+                  style={{ maxWidth: "100px" }}
+                  title={factura.codigo_obra}
+                >
+                  {factura.codigo_obra ?? "-"}
+                </td>
                 <td>{factura.num_factura ?? "-"}</td>
                 <td>{factura.importe}</td>
                 <td>
@@ -488,7 +506,11 @@ function GestionFacturas() {
                 </td>
                 <td>{factura.codigo_usuario_alta ?? "-"}</td>
                 <td>{factura.codigo_usuario_baja ?? "-"}</td>
-                <td>{factura.observaciones ?? "-"}</td>
+                <td
+                className="text-truncate" 
+                  style={{ maxWidth: "100px" }}
+                  title={factura.observaciones}
+                >{factura.observaciones ?? "-"}</td>
                 <td>{factura.version}</td>
                 <td>
                   <Button
@@ -511,43 +533,26 @@ function GestionFacturas() {
       </Table>
 
       <Pagination>
-        {Array.from({ length: totalPaginas }, (_, i) => (
+        <Pagination.First onClick={() => handlePageChange(1)} />
+        {startPage > 1 && (
+          <Pagination.Prev onClick={() => handlePageChange(startPage - 1)} />
+        )}
+        {paginasVisibles.map((page) => (
           <Pagination.Item
-            key={i}
-            active={i + 1 === currentPage}
-            onClick={() => handlePageChange(i + 1)}
+            key={page}
+            active={page === currentPage}
+            onClick={() => handlePageChange(page)}
           >
-            {i + 1}
+            {page}
           </Pagination.Item>
         ))}
+        {endPage < totalPaginas && (
+          <Pagination.Next onClick={() => handlePageChange(endPage + 1)} />
+        )}
+        <Pagination.Last onClick={() => handlePageChange(totalPaginas)} />
       </Pagination>
     </div>
   );
 }
 
 export default GestionFacturas;
-
-/*
-Asi es como debería quedar la Paginación
-
-<Pagination>
-      <Pagination.First onClick={() => onPageChange(1)} />
-      {startPage > 1 && (
-        <Pagination.Prev onClick={() => onPageChange(startPage - 1)} />
-      )}
-      {paginasVisibles.map((page) => (
-        <Pagination.Item
-          key={page}
-          active={page === currentPage}
-          onClick={() => onPageChange(page)}
-        >
-          {page}
-        </Pagination.Item>
-      ))}
-      {endPage < totalPaginas && (
-        <Pagination.Next onClick={() => onPageChange(endPage + 1)} />
-      )}
-      <Pagination.Last onClick={() => onPageChange(totalPaginas)} />
-    </Pagination>
-    
-*/

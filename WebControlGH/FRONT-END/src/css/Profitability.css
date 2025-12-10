@@ -1,3 +1,8 @@
+.profitability-table thead th {
+  background-color: #006486;
+  color: rgb(0, 0, 0, 1);
+}
+
 .profitability-table-container {
   display: flex;
   flex-direction: column;

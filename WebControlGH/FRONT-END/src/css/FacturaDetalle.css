@@ -10,6 +10,7 @@
 
 h2 { /* Estilo para el encabezado de la sección */
   text-align: center;
+  color: white;
   margin-bottom: 30px; 
   font-size: 24px; 
 }
@@ -48,4 +49,14 @@ tr:nth-child(even) { /* Estilo para filas pares de la tabla */
 
 tr:nth-child(odd) { /* Estilo para filas impares de la tabla */
   background-color: #ffffff; 
+}
+
+tbody{
+  max-width: 100px;
+}
+
+.text-truncate { /* Clase para truncar texto largo con puntos suspensivos */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
