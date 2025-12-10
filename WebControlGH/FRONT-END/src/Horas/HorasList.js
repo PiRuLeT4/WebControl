@@ -9,8 +9,6 @@ import {
   Container,
   Row,
   Col,
-  Card,
-  Collapse,
   Dropdown,
   Accordion,
 } from "react-bootstrap";
@@ -44,8 +42,7 @@ const HorasList = () => {
   const [open, setOpen] = useState(true);
   const [user, setUser] = useState(null);
   const [subordinados, setSubordinados] = useState([]);
-
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(15);
   const maxPaginasVisibles = 10;
   const navigate = useNavigate();
 
@@ -77,6 +74,7 @@ const HorasList = () => {
   const fetchAllHoras = async () => {
     setLoading(true);
     try {
+      // Obtener el código del usuario actual (manager)
       const storedUser = localStorage.getItem("user");
       if (!storedUser) {
         console.warn("No hay usuario en localStorage");
@@ -84,14 +82,17 @@ const HorasList = () => {
       }
       const userData = JSON.parse(storedUser);
       const codigoResponsable = userData.codigo_usuario;
+      console.log("👤 Usuario actual (manager):", codigoResponsable, userData);
 
-      const endpoint = `http://localhost:3002/api/horas/horasSubordinados/${codigoResponsable}`;
+      // Usar el nuevo endpoint optimizado que filtra en el backend
+      const endpoint = `http://localhost:3002/api/horas/subordinados/${codigoResponsable}`;
       const res = await axios.get(endpoint);
+      const horasSubordinados = res.data?.data || [];
 
-      const data = res.data?.data || [];
-      setHoras(data);
+      setHoras(horasSubordinados);
 
-      const pendientes = data.filter((h) => !h.fecha_validacion);
+      // Calcular días pendientes
+      const pendientes = horasSubordinados.filter((h) => !h.fecha_validacion);
       setDiasPendientes(pendientes.length);
     } catch (err) {
       console.error("Error al recuperar las horas -", err);
@@ -102,6 +103,7 @@ const HorasList = () => {
     }
   };
 
+  // para el filtro de estados de obras
   const fetchEstadoObra = async () => {
     try {
       const endpoint = "http://localhost:3002/api/estado-obra";
@@ -118,6 +120,7 @@ const HorasList = () => {
     }
   };
 
+  // para el filtro de tipos de obras
   const fetchTipoObra = async () => {
     try {
       const endpoint = "http://localhost:3002/api/tipo-obra";
@@ -134,6 +137,7 @@ const HorasList = () => {
     }
   };
 
+  // para el filtro de subordinados
   const fetchSubordinados = async () => {
     const data = await getSubordinadosUsuarioActual();
     setSubordinados(data);
@@ -168,8 +172,6 @@ const HorasList = () => {
 
   // ------------------- FILTRADO ------------------- //
   //#region FILTRADO
-
-  // REEMPLAZA TODA LA SECCIÓN DE FILTRADO por esto:
 
   const horasFiltradas = useMemo(() => {
     return horas.filter((h) => {
@@ -214,7 +216,7 @@ const HorasList = () => {
 
       // 4. Usuario (solo si hay uno seleccionado)
       if (filterUsuario) {
-        if (h.codigo_usuario !== filterUsuario) {
+        if (String(h.codigo_usuario) !== String(filterUsuario)) {
           return false;
         }
       }
@@ -222,8 +224,8 @@ const HorasList = () => {
       // 5. Obra (solo si hay texto)
       if (filterObraText.trim()) {
         const obraTexto = filterObraText.toLowerCase();
-        const codigoObra = (h.codigo_obra || "").toLowerCase();
-        const descripcion = (h.descripcion_obra || "").toLowerCase();
+        const codigoObra = String(h.codigo_obra || "").toLowerCase();
+        const descripcion = String(h.descripcion_obra || "").toLowerCase();
         if (
           !codigoObra.includes(obraTexto) &&
           !descripcion.includes(obraTexto)
@@ -412,7 +414,9 @@ const HorasList = () => {
                     <Row className="g-2 align-items-end mb-2">
                       <Col md={2}>
                         <Form.Group controlId="filtroStart">
-                          <Form.Label className="small mb-1">Fecha inicio</Form.Label>
+                          <Form.Label className="small mb-1">
+                            Fecha inicio
+                          </Form.Label>
                           <Form.Control
                             type="date"
                             size="sm"
@@ -423,7 +427,9 @@ const HorasList = () => {
                       </Col>
                       <Col md={2}>
                         <Form.Group controlId="filtroEnd">
-                          <Form.Label className="small mb-1">Fecha fin</Form.Label>
+                          <Form.Label className="small mb-1">
+                            Fecha fin
+                          </Form.Label>
                           <Form.Control
                             type="date"
                             size="sm"
@@ -434,7 +440,9 @@ const HorasList = () => {
                       </Col>
                       <Col md={3}>
                         <Form.Group controlId="filtroUsuario">
-                          <Form.Label className="small mb-1">Usuario</Form.Label>
+                          <Form.Label className="small mb-1">
+                            Usuario
+                          </Form.Label>
                           <Form.Select
                             size="sm"
                             value={filterUsuario}
@@ -475,7 +483,10 @@ const HorasList = () => {
                       <Col md={2}>
                         <Form.Group controlId="filtroTarea">
                           <Form.Label className="small mb-1">Tarea</Form.Label>
-                          <Form.Control size="sm" placeholder="Busca tarea..." />
+                          <Form.Control
+                            size="sm"
+                            placeholder="Busca tarea..."
+                          />
                         </Form.Group>
                       </Col>
                     </Row>
@@ -484,7 +495,9 @@ const HorasList = () => {
                     <Row className="g-2 align-items-end">
                       <Col md={3}>
                         <Form.Group>
-                          <Form.Label className="small mb-1">Estado obra</Form.Label>
+                          <Form.Label className="small mb-1">
+                            Estado obra
+                          </Form.Label>
                           <Dropdown>
                             <Dropdown.Toggle
                               variant="outline-secondary"
@@ -503,7 +516,9 @@ const HorasList = () => {
                                     key={index}
                                     type="checkbox"
                                     id={`estado-${index}`}
-                                    label={<small>{estado.descripcion_estado}</small>}
+                                    label={
+                                      <small>{estado.descripcion_estado}</small>
+                                    }
                                     className="mb-1"
                                     checked={estadosSeleccionados.includes(
                                       estado.descripcion_estado
@@ -537,7 +552,9 @@ const HorasList = () => {
 
                       <Col md={3}>
                         <Form.Group>
-                          <Form.Label className="small mb-1">Tipo de obra</Form.Label>
+                          <Form.Label className="small mb-1">
+                            Tipo de obra
+                          </Form.Label>
                           <Dropdown>
                             <Dropdown.Toggle
                               variant="outline-secondary"
@@ -588,7 +605,9 @@ const HorasList = () => {
                       </Col>
 
                       <Col md={4}>
-                        <Form.Label className="small mb-1">Estados Horas:</Form.Label>
+                        <Form.Label className="small mb-1">
+                          Estados Horas:
+                        </Form.Label>
                         <div className="d-flex gap-2 flex-wrap">
                           <Form.Check
                             type="checkbox"
@@ -639,7 +658,7 @@ const HorasList = () => {
                         </div>
                       </Col>
                     </Row>
-                    </Form>
+                  </Form>
                 </Accordion.Body>
               </Accordion.Item>
             </Accordion>
@@ -679,6 +698,26 @@ const HorasList = () => {
             <Button className="custom-button">✅ Validar Horas</Button>
             <Button className="custom-button">🏉 Cambiar Horas de obra</Button>
             <Button className="custom-button">🖨️ Imprimir Horas</Button>
+          </Col>
+        </Row>
+      </Container>
+      <Container>
+        <Row>
+          <Col className="text-end">
+            <Form.Label className="small mb-1">Paginación listado: </Form.Label>
+            <Form.Control
+              type="number"
+              size="sm"
+              min="1"
+              max="100"
+              value={itemsPerPage}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 1;
+                setItemsPerPage(Math.max(1, Math.min(100, value)));
+                setCurrentPage(1);
+              }}
+              style={{ maxWidth: "60px", display: "inline-block" }}
+            />
           </Col>
         </Row>
       </Container>
@@ -743,7 +782,16 @@ const HorasList = () => {
                           .filter(Boolean)
                           .join(" ") || `Usuario ${h.codigo_usuario}`}
                       </td>
-                      <td>{h.codigo_obra ?? "-"}</td>
+                      <td
+                        style={{
+                          maxWidth: "120px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {h.codigo_obra ?? "-"}
+                      </td>
                       <td
                         style={{
                           maxWidth: "200px",
@@ -799,7 +847,7 @@ const HorasList = () => {
                       </td>
                       <td
                         style={{
-                          maxWidth: "150px",
+                          maxWidth: "130px",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -860,9 +908,7 @@ const HorasList = () => {
               </Pagination.Item>
             ))}
             {endPage < totalPaginas && (
-              <Pagination.Next
-                onClick={() => handlePageChange(endPage + 1)}
-              />
+              <Pagination.Next onClick={() => handlePageChange(endPage + 1)} />
             )}
             <Pagination.Last
               onClick={() => handlePageChange(totalPaginas)}

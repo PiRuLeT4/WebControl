@@ -66,42 +66,47 @@ function Login() {
   };
 
   return (
-    <div className="login-container">
-      <form onSubmit={handleSubmit} className="login-form">
-        <h2>LOGIN</h2>
+    <>
+      <div className="header">
+        <h1>GESTOR CC</h1>
+      </div>
+      <div className="login-container">
+        <form onSubmit={handleSubmit} className="login-form">
+          <h2>LOGIN</h2>
 
-        {/* Mostrar mensaje de error */}
-        {error && <div className="error-message">{error}</div>}
+          {/* Mostrar mensaje de error */}
+          {error && <div className="error-message">{error}</div>}
 
-        <div className="input-group">
-          <label htmlFor="username">Usuario:</label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            disabled={loading}
-            autoComplete="username"
-          />
-        </div>
+          <div className="input-group">
+            <label htmlFor="username">Usuario:</label>
+            <input
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={loading}
+              autoComplete="username"
+            />
+          </div>
 
-        <div className="input-group">
-          <label htmlFor="password">Contraseña:</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-            autoComplete="current-password"
-          />
-        </div>
+          <div className="input-group">
+            <label htmlFor="password">Contraseña:</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              autoComplete="current-password"
+            />
+          </div>
 
-        <button type="submit" className="login-button" disabled={loading}>
-          {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
-        </button>
-      </form>
-    </div>
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+          </button>
+        </form>
+      </div>
+    </>
   );
 }
 

@@ -10,7 +10,7 @@ const BASE_URL = "http://localhost:3002/api";
  */
 export const getSubordinados = async (codigoResponsable) => {
   try {
-    const endpoint = `${BASE_URL}/usuario/subordinados/${codigoResponsable}`;
+    const endpoint = `${BASE_URL}/responsables/subordinados/${codigoResponsable}`;
     const res = await axios.get(endpoint);
     return res.data?.data || [];
   } catch (err) {
