@@ -89,7 +89,7 @@ function Navbar() {
               </div>
             )}
           </div>
-          <a href="#gastos">Gastos</a>
+          <Link to="/home/gastos-obras">Gastos</Link>
 
           <a href="#compras">Gestión de SAT</a>
 
