@@ -124,7 +124,7 @@ function GastosList(){
         data = data.filter(g => tiposSeleccionados.includes(g.tipo));
     }
     if(filterStart){
-        fata = fata.filter(g => g.fecha >= filterStart);
+        data = data.filter(g => g.fecha >= filterStart);
     }
     if(filterEnd){
         data = data.filter(g => g.fecha <= filterEnd);
