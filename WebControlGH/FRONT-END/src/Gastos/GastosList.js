@@ -20,7 +20,6 @@ function GastosList(){
 
     const[mostrarListado, setMostrarListado] = useState(false);
     const[gastos, setGastos] = useState([]);
-    const[search, setSearch] = useState("");
     const[loading, setLoading] = useState(true);
 
     const [open, setOpen] = useState(true);
@@ -39,20 +38,122 @@ function GastosList(){
 
     const [itemsPerPage, setItemsPerPage] = useState(15);
 
+    const [usuarios, setUsuarios] = useState([]);
+
+    const [obras, setObras] = useState([]);
+
    //FETCH
+
+   useEffect(() => {
+        const fetchGastos = async() => {
+            try{
+                setLoading(true);
+                
+                const response = await axios.get("http://localhost:3002/api/gastos");
+
+                const data = response.data || [];
+                setGastos(data);
+                setDiasPendientesValidar(
+                    data.filter((g) => !g.validado).length
+                );
+            } catch(error){
+                console.error("Error al cargar gastos:", error);
+            }finally{
+                setLoading(false);
+            }
+        };
+        fetchGastos();
+   }, []);
+
+   useEffect(() => {
+    const fetchTiposGasto = async () => {
+        try{
+            const response = await axios.get("http://localhost:3002/api/tipos-gasto");
+            setTiposGastos(response.data || []);
+        } catch (error){
+            console.error("Error al cargar tipos de gasto:", error);
+        }
+    };
+    fetchTiposGasto();
+
+   }, []);
+
+   useEffect(() => {
+    const fetchUsuarios = async () => {
+        try {
+            const response = await axios.get("http://localhost:3002/api/usuarios");
+            setUsuarios(response.data || []);
+        } catch (error){
+            console.error("Error al cargar usuarios:", error);
+        }
+    };
+    fetchUsuarios();
+   }, []);
+
+   useEffect(() => {
+    const fetchObras = async () => {
+        try{
+            const response = await axios.get("http://localhost:3002/api/obras");
+            setObras(response.data || []);
+        } catch (error){
+            console.error("Error al cargar obras:", error);
+        }
+    };
+    fetchObras();
+   }, []);
     
    //FILTRADO
+   const gastosFiltrados = useMemo(() => {
+    let data = [...gastos];
 
+    if(mostrarPendientesValidar){
+        data = data.filter(g => !g.validado);
+    }
+    if(searchTerm){
+        data = data.filter(g=>
+            g.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }
+    if(filterUsuario){
+        data = data.filter(g => String(g.usuarioId) === String(filterUsuario));
+    }
+    if(filterObraText){
+        data = data.filter(g => g.obra?.toLowerCase().includes(filterObraText.toLowerCase()));
+    }
+    if(tiposSeleccionados.length > 0){
+        data = data.filter(g => tiposSeleccionados.includes(g.tipo));
+    }
+    if(filterStart){
+        fata = fata.filter(g => g.fecha >= filterStart);
+    }
+    if(filterEnd){
+        data = data.filter(g => g.fecha <= filterEnd);
+    }
+    if(filterStartPayment){
+        data = data.filter(g => g.fechaPago >= filterStartPayment);
+    }
+    if(filterEndPayment){
+        data = data.filter(g => g.fechaPago <= filterEndPayment);
+    }
+    return data;
+   }, [gastos,
+        mostrarPendientesValidar,
+        searchTerm,
+        filterUsuario,
+        filterObraText,
+        tiposSeleccionados]);
+   
+   
    //PAGINACION
    const totalPages = useMemo(() => {
-    return Math.ceil(gastos.length / itemsPerPage);
-   }, [gastos.length, itemsPerPage]);
+    return Math.ceil(gastosFiltrados.length / itemsPerPage);
+   }, [gastosFiltrados.length, itemsPerPage]);
 
    const paginatedGastos = useMemo(() => {
     const startIndex = (currentPage -1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return gastos.slice(startIndex, endIndex);
-   }, [gastos, currentPage, itemsPerPage]);
+    return gastosFiltrados.slice(startIndex, endIndex);
+   }, [gastosFiltrados, currentPage, itemsPerPage]);
 
    //ACCIONES
     //flechas de movimiento entre paginas
@@ -77,7 +178,17 @@ function GastosList(){
    };
 
    const limpiarFiltros = () => {
-
+    setFilterStart("");
+    setFilterEnd("");
+    setFilterUsuario("");
+    setFilterObraText("");
+    setFilterStartPayment("");
+    setFilterEndPayment("");
+    setFilterVisaPayment("");
+    setTiposSeleccionados([]);
+    setSearchTerm("");
+    setMostrarSoloPendientesValidar(false);
+    setCurrentPage(1);
    };
 
 
@@ -96,6 +207,8 @@ function GastosList(){
                     variant="warning"
                     onClick={() => {
                         setMostrarSoloPendientesValidar(true);
+                        setMostrarListado(true);
+                        setCurrentPage(1);
                     }}
                     title="Pulsa para ver pendientes"
                     >
@@ -131,8 +244,16 @@ function GastosList(){
                                                 <Col md = {3}>
                                                     <Form.Group>
                                                         <Form.Label> Usuario</Form.Label>
-                                                        <Form.Select size="sm" value={filterUsuario} onChange={(e) => setFilterUsuario(e.target.value)}>
-
+                                                        <Form.Select
+                                                        size="sm"
+                                                        value={filterUsuario}
+                                                        onChange={(e) => setFilterUsuario(e.target.value)}>
+                                                            <option value="">Todos</option>
+                                                            {usuarios.map((u) =>(
+                                                                <option key={u.id} value={u.id}>
+                                                                    {u.nombre}
+                                                                </option>
+                                                            ))}
                                                         </Form.Select>
                                                     </Form.Group>
                                                 </Col>
@@ -145,6 +266,12 @@ function GastosList(){
                                                             value={filterObraText}
                                                             onChange={(e) => setFilterObraText(e.target.value)}
                                                             placeholder="Buscar obra..." />
+
+                                                            <datalist id="lista-obras-filtro">
+                                                                {obras.map((obra) => (
+                                                                    <option key={obra.id} value={obra.nombre} />
+                                                                ))}
+                                                            </datalist>
                                                     </Form.Group>
                                                 </Col>
                                             </Row>
@@ -266,7 +393,7 @@ function GastosList(){
                                     }}
                                     style={{minWidth:250, maxWidth:300}}/>
                                     {mostrarPendientesValidar && (
-                                        <span classNam="badge bg-warning text dark">
+                                        <span className="badge bg-warning text-dark">
                                             Mostrando pendientes
                                         </span>
                                     )}
@@ -348,65 +475,68 @@ function GastosList(){
             </Container>
 
             {/* TABLA */}
-            <div className="table-container">
-                <Table striped bordered size="sm">
-                    <thead>
-                        <tr>
-                            <th>
-                                <Form.Check />
-                            </th>
-                            <th>ID</th>
-                            <th>F.Gasto</th>
-                            <th>Usu</th>
-                            <th>C Obra</th>
-                            <th>Descripcion</th>
-                            <th>Tipo</th>
-                            <th>Cant</th>
-                            <th>i.u.</th>
-                            <th>Total</th>
-                            <th>Validado</th>
-                            <th>UsuV</th>
-                            <th>Visa</th>
-                            <th>Pagado</th>
-                            <th>UsuP</th>
-                            <th>Obs</th>
-                            <th>Accion</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedGastos.length === 0 ? (
+            {mostrarListado && (
+                <div className="table-container">
+                    <Table striped bordered size="sm">
+                        <thead>
                             <tr>
-                                <td colSpan={17} className="text-center">
-                                    No hay gastos para mostrar
-                                </td>
+                                <th>
+                                    <Form.Check />
+                                </th>
+                                <th>ID</th>
+                                <th>F.Gasto</th>
+                                <th>Usu</th>
+                                <th>C Obra</th>
+                                <th>Descripcion</th>
+                                <th>Tipo</th>
+                                <th>Cant</th>
+                                <th>i.u.</th>
+                                <th>Total</th>
+                                <th>Validado</th>
+                                <th>UsuV</th>
+                                <th>Visa</th>
+                                <th>Pagado</th>
+                                <th>UsuP</th>
+                                <th>Obs</th>
+                                <th>Accion</th>
                             </tr>
-                        ) : (
-                            paginatedGastos.map((gasto) => (
-                                <tr key={gasto.id}>
-                                    <td>Form.Check</td>
-                                    <td>{gasto.id}</td>
-                                    <td>{gasto.fecha}</td>
-                                    <td>{gasto.usuario}</td>
-                                    <td>{gasto.obra}</td>
-                                    <td>{gasto.descripcion}</td>
-                                    <td>{gasto.tipo}</td>
-                                    <td>{gasto.cantidad}</td>
-                                    <td>{gasto.importeUnitario}</td>
-                                    <td>{gasto.total}</td>
-                                    <td>{gasto.validado ? "✔" : ""}</td>
-                                    <td>{gasto.usuarioValida}</td>
-                                    <td>{gasto.visa ? "✔" : ""}</td>
-                                    <td>{gasto.pagado ? "✔" : ""}</td>
-                                    <td>{gasto.usuarioPaga}</td>
-                                    <td>{gasto.observaciones}</td>
-                                    <td>Acciones</td>
+                        </thead>
+                        <tbody>
+                            {paginatedGastos.length === 0 ? (
+                                <tr>
+                                    <td colSpan={17} className="text-center">
+                                        No hay gastos para mostrar
+                                    </td>
                                 </tr>
-                            ))
-                        )}
+                            ) : (
+                                paginatedGastos.map((gasto) => (
+                                    <tr key={gasto.id}>
+                                        <td><Form.Check/></td>
+                                        <td>{gasto.id}</td>
+                                        <td>{gasto.fecha}</td>
+                                        <td>{gasto.usuario}</td>
+                                        <td>{gasto.obra}</td>
+                                        <td>{gasto.descripcion}</td>
+                                        <td>{gasto.tipo}</td>
+                                        <td>{gasto.cantidad}</td>
+                                        <td>{gasto.importeUnitario}</td>
+                                        <td>{gasto.total}</td>
+                                        <td>{gasto.validado ? "✔" : ""}</td>
+                                        <td>{gasto.usuarioValida}</td>
+                                        <td>{gasto.visa ? "✔" : ""}</td>
+                                        <td>{gasto.pagado ? "✔" : ""}</td>
+                                        <td>{gasto.usuarioPaga}</td>
+                                        <td>{gasto.observaciones}</td>
+                                        <td>Acciones</td>
+                                    </tr>
+                                ))
+                            )}
 
-                    </tbody>
-                </Table>
-            </div>
+                        </tbody>
+                    </Table>
+                </div>
+            )}
+            
         </div>
     );
 };
